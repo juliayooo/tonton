@@ -4,7 +4,9 @@ import { getStorage, ref, getDownloadURL } from "firebase/storage";
 
 interface MenuItem {
   item: string;
+  desc?: string;
   filename?: string;
+  imageUrl?: string;
 }
 
 const firebaseConfig = {
@@ -26,7 +28,7 @@ export default function Menu() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const sheetURL = "https://opensheet.elk.sh/1rdw6mXlFVo-JhDxMOGxdeLY6XJQefKcXF3vCCOmHF2k/1";
+        const sheetURL = "https://opensheet.elk.sh/19mU6qVEyENlKqTPIb45CuIF4HA0H9QDMM8Bn_b44aJ4/1";
         const response = await fetch(sheetURL);
         const data: MenuItem[] = await response.json();
 
@@ -35,7 +37,7 @@ export default function Menu() {
           data.map(async (line) => {
             if (line.filename) {
               try {
-                const imageRef = ref(storage, `assets/items_resized/${line.filename}.jpg`);
+                const imageRef = ref(storage, `assets/items_isolated/${line.filename}`);
                 const url = await getDownloadURL(imageRef);
                 return { ...line, imageUrl: url };
               } catch {
@@ -57,35 +59,53 @@ export default function Menu() {
     fetchData();
   }, []);
 
-  if (loading) return <p style={{fontFamily: 'Garet'}} className="pt-[6rem] text-center">LOADING MENU...</p>;
+  if (loading) {
+    return (
+      <p style={{ fontFamily: 'Garet', color: 'white' }} className="pt-[6rem] text-center tracking-wider">
+        LOADING MENU...
+      </p>
+    );
+  }
 
   return (
-    <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' /* Creates 3 equal-width columns */
-}}className="pt-[6rem] menu-container p-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 px-4 py-12 sm:px-8 md:px-16 lg:px-24 menu-container max-w-7xl mx-auto">
       {menuItems.map((line, idx) => {
         if (line.item.startsWith("*")) {
           return (
-            <div key={idx} className="col-span-3"><h3 key={idx} className="text-center text-[#2E6A2B] font-bold text-xl my-2">
-              <br /> {line.item.replace("*", "")}
-            </h3></div>
-            
+            <div key={idx} className="col-span-full pt-6 pb-2">
+              <h3 className="text-center text-white font-bold text-xl sm:text-2xl tracking-wide">
+                {line.item.replace("*", "")}
+              </h3>
+            </div>
           );
         } else if (line.item === "/") {
-          // return <br key={idx} />;
+          return null;
         } else {
           return (
-            <div key={idx} className="menu-card rounded mb-4 flex flex-col items-center ">
-              {line.filename && line['imageUrl'] && (
-                <div className=" p-5 image-crop-wrapper mb-2 flex justify-center">
+            <div 
+              key={idx} 
+              className="menu-card rounded-lg mb-2 flex flex-col p-4 sm:p-5 items-center justify-between text-center transition-transform hover:scale-[1.02]"
+            >
+              {line.filename && line.imageUrl && (
+                <div className="p-2 image-crop-wrapper mb-3 flex justify-center items-center overflow-hidden rounded w-full">
                   <img
-                    src={line['imageUrl']}
+                    src={line.imageUrl}
                     alt={line.item}
-                    className="w-1/2  aspect-square w-[75vw] md:w-[50vw] object-cover object-bottom"
+                    className="aspect-square w-full max-w-[220px] sm:max-w-[240px] object-cover object-bottom scale-[0.85] transition-transform"
                   />
                 </div>
               )}
-              <p className="text-center">{line.item}</p>
-              <p style={{fontFamily: 'Garet'}} className="text-center text-sm">{line.desc}</p>
+              
+              <div className="flex flex-col items-center gap-1 w-full mt-auto">
+                <p style={{ fontFamily: 'Garet', color: 'white' }} className="font-semibold text-base sm:text-lg leading-snug">
+                  {line.item}
+                </p>
+                {line.desc && (
+                  <p style={{ fontFamily: 'Garet', color: 'white' }} className="text-xs sm:text-sm opacity-80 leading-relaxed">
+                    {line.desc}
+                  </p>
+                )}
+              </div>
             </div>
           );
         }
